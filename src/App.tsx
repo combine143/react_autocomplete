@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import './App.scss';
 import { peopleFromServer } from './data/people';
 import classNames from 'classnames';
@@ -26,18 +26,19 @@ export const App: React.FC<AppProps> = ({ delay = 300, onSelected }) => {
     null,
   );
 
-  const debouncedSetQuery = useMemo(
-    () => debounce((q: string) => setDebouncedQuery(q), delay),
-    [delay],
-  );
+  const debouncedSetQuery = useRef(debounce(q => setDebouncedQuery(q), delay));
 
   useEffect(() => {
-    debouncedSetQuery(query);
+    debouncedSetQuery.current(query);
+  }, [query]);
+
+  useEffect(() => {
+    debouncedSetQuery.current = debounce(q => setDebouncedQuery(q), delay);
 
     return () => {
-      debouncedSetQuery.cancel();
+      debouncedSetQuery.current.cancel();
     };
-  }, [query, debouncedSetQuery]);
+  }, [delay]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
